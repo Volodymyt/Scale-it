@@ -74,3 +74,6 @@ crashlytics-build.properties
 
 # JetBrains Rider project directory
 .idea/
+
+# MB Ignore nuget packages?
+# Packages/nuget-packages/InstalledPackages/
