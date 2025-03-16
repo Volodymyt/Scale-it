@@ -11,8 +11,6 @@ public class DragCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 
     private bool _isDragging = false, _canDrag = false;
 
-    private const float _gridSize = 110f;
-
     private void Awake()
     {
         _rectTransform = GetComponent<RectTransform>();
@@ -42,12 +40,13 @@ public class DragCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
         {
             Vector2 currentPosition = eventData.position - _dragOffset;
             _rectTransform.anchoredPosition = currentPosition;
+            _rectTransform.SetAsLastSibling();
         }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         _isDragging = false;
-        _gridManager.PlaceOnGrid(gameObject.GetInstanceID(), _rectTransform.anchoredPosition, _rectTransform.sizeDelta / _gridSize, _rectTransform, _oldPosition);
+        _rectTransform.anchoredPosition = _gridManager.PlaceOnGrid(gameObject.GetInstanceID(), _rectTransform.anchoredPosition, _rectTransform.sizeDelta, _oldPosition);
     }
 }
