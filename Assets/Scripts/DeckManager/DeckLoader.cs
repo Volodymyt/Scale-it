@@ -10,7 +10,7 @@ namespace DeckManager
         public static DeckLoader Instance { get; private set; }
         public Deck Deck { get; private set; }
 
-        public string DeckName = "default";
+        public string deckName = "default";
 
         private void Awake()
         {
@@ -32,7 +32,7 @@ namespace DeckManager
 
         private bool LoadDeck()
         {
-            var path = Path.Combine(Application.streamingAssetsPath, $"deck_{DeckName}.yaml");
+            var path = Path.Combine(Application.streamingAssetsPath, $"deck_{deckName}.yaml");
 
             if (!File.Exists(path))
             {
@@ -43,13 +43,13 @@ namespace DeckManager
             var yamlText = File.ReadAllText(path);
 
             var deserializer = new DeserializerBuilder()
-#if DEBUG
+#if !DEBUG
                 .IgnoreUnmatchedProperties()
 #endif
                 .Build();
 
-            Deck = deserializer.Deserialize<Deck>(yamlText);
-            Debug.Log($"Deck \"{DeckName}\" loaded.");
+            Deck = new Deck(deserializer.Deserialize<RawDeck>(yamlText));
+            Debug.Log($"Deck \"{deckName}\" loaded.");
 
             return true;
         }

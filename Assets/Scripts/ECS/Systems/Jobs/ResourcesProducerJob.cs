@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using ECS.Components;
 using ECS.Enums;
 using Unity.Entities;
@@ -10,18 +12,29 @@ namespace ECS.Systems.Jobs
         public ComponentLookup<ConnectionComponent> ConnectionComponents;
         public BufferLookup<OutputConnectionElement> OutputConnections;
 
+        delegate void SplitStrategy(ref CardComponent card, ref DynamicBuffer<OutputConnectionElement> outputBuffer);
+
         public void Execute(Entity entity, ref CardComponent card)
         {
             if (!OutputConnections.HasBuffer(entity)) return;
 
             var outputBuffer = OutputConnections[entity];
-            if (card.CardType == CardType.Splitter)
+
+            var strategyMap = new Dictionary<string, SplitStrategy>
             {
-                UnityEngine.Debug.Log($"Splitter not implemented! Card type: {card.CardType}");
+                { "exclusive", ExclusiveStrategy },
+            };
+
+            var strategyName = card.Tags["split_strategy"]?.First() ?? "exclusive";
+            if (strategyMap.TryGetValue(strategyName, out SplitStrategy strategy))
+            {
+                strategy(ref card, ref outputBuffer);
+            }
+            else
+            {
+                UnityEngine.Debug.Log($"Split strategy {strategyName} not implemented! Card id: {card.CardID}");
                 return;
             }
-
-            ExclusiveStrategy(ref card, ref outputBuffer);
         }
 
         private void ExclusiveStrategy(ref CardComponent card, ref DynamicBuffer<OutputConnectionElement> outputBuffer)
@@ -38,7 +51,7 @@ namespace ECS.Systems.Jobs
 
                 WriteOffLocked(ref card, ref output);
                 RecalculateOutputAmount(ref card, ref output);
-                        
+
                 ConnectionComponents[outputElement.ConnectionEntity] = output;
             }
         }
@@ -46,7 +59,7 @@ namespace ECS.Systems.Jobs
         private static void WriteOffLocked(ref CardComponent card, ref ConnectionComponent output)
         {
             if (output.OutputLinkState != ConnectionLinkState.Sent) return;
-            
+
             card.ResourcesLock[output.OutputResourceID] -= output.InputReceived;
             output.InputReceived = 0;
             output.OutputLinkState = ConnectionLinkState.NotReadyToSend;
@@ -57,18 +70,18 @@ namespace ECS.Systems.Jobs
             if (output.OutputLinkState != ConnectionLinkState.NotReadyToSend &&
                 output.OutputLinkState != ConnectionLinkState.ReadyToSend)
                 return;
-            
+
             var need = Math.Min(
                 card.ResourcesStored[output.OutputResourceID],
                 Math.Max(0, output.InputCapacity) - output.OutputAmount
             );
-            
+
             card.ResourcesStored[output.OutputResourceID] =
                 Math.Max(0, card.ResourcesStored[output.OutputResourceID] - need);
             card.ResourcesLock[output.OutputResourceID] =
                 Math.Max(0, card.ResourcesLock[output.OutputResourceID] + need);
             output.OutputAmount = Math.Max(0, output.OutputAmount + need);
-            
+
             output.OutputLinkState = (output.OutputAmount > 0)
                 ? ConnectionLinkState.ReadyToSend
                 : ConnectionLinkState.NotReadyToSend;

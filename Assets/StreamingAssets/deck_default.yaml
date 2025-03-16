@@ -149,7 +149,7 @@ cards:
             resourceID: 20210
             ratio: 1
 
-  - cardID: 31210
+  - cardID: 31220
     name: card.drawknife
     tags: [ tool, playable ]
     recipes:
