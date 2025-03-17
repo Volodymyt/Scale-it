@@ -1,0 +1,226 @@
+﻿meta:
+  name: default
+  version: '0.1'
+
+cards:
+# resources 1xxxx
+  - cardID: 10100
+    name: resource.wood_logs
+    tags: [ resource, storable, solid ]
+    stackSize: 100
+
+  - cardID: 10101
+    name: resource.wood_waste
+    tags: [ resource, self_disposing, storable, bulk ]
+    stackSize: 1000
+
+  - cardID: 10102
+    name: resource.wood_logs_debarked
+    tags: [ resource, storable, solid ]
+    stackSize: 100
+
+# Modifiers 2xxxx
+  - cardID: 20100
+    name: modifier.handwork
+    tags: [ modifier ]
+
+  - cardID: 20210
+    name: modifier.chopping
+    tags: [ modifier ]
+  - cardID: 20220
+    name: modifier.scraping
+    tags: [ modifier ]
+  
+# Playable cards 3xxxx
+# ... special cards 30xxx
+  - cardID: 30100
+    name: card.storage_solid_small
+    tags: [ storage ]
+    recipes:
+      - recipeID: 1
+        name: recipe.storage_solid_small
+        inputs:
+          - link: 0
+            resourceTags: [ storable, solid ]
+            storage: 10
+        outputs:
+          - link: 0
+            resourceTags: [ storable, solid ]
+            ratio: 1
+
+  - cardID: 30500
+    name: card.splitter_modifier_one_by_one
+    tags: [ splitter, split_modifier, split_strategy:one_by_one ]
+    recipes:
+      - recipeID: 1
+        name: recipe.split_modifier_one_by_one
+        modifiers:
+          - link: 0
+            resourceTags: [ modifier ]
+            required: true
+            affects:
+              - output: 0
+                ratio: 1
+              - output: 1
+                ratio: 1
+        outputs:
+          - link: 0
+            resourceTags: [ modifier ]
+            ratio: 1
+          - link: 1
+            resourceTags: [ modifier ]
+            ratio: 1
+
+  - cardID: 30600
+    name: card.splitter_resource_equally
+    tags: [ splitter, split_resource, split_strategy:equally ]
+    recipes:
+      - recipeID: 1
+        name: recipe.split_modifier_equally
+        inputs:
+          - link: 0
+            resourceTags: [ resource ]
+        outputs:
+          - link: 0
+            resourceTags: [ resource ]
+            ratio: 1
+          - link: 1
+            resourceTags: [ resource ]
+            ratio: 1
+
+# ... tools 31xxx
+  - cardID: 31100
+    name: card.worker
+    tags: [ tool, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.handwork
+        outputs:
+          - link: 0
+            resourceID: 20100
+            ratio: 100
+
+  - cardID: 31210
+    name: card.woodcutter_axe
+    tags: [ tool, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.chopping
+        modifiers:
+          - link: 0
+            resourceID: 20100
+            required: true
+            affects:
+              - output: 0
+                ratio: 0.5
+        outputs:
+          - link: 0
+            resourceID: 20210
+            ratio: 1
+      - recipeID: 2
+        name: recipe.bark_scraping
+        modifiers:
+          - link: 0
+            resourceID: 20100
+            required: true
+            affects:
+              - output: 0
+                ratio: 0.5
+        outputs:
+          - link: 0
+            resourceID: 20220
+            ratio: 0.5
+
+  - cardID: 31211
+    name: card.chainsaw
+    tags: [ tool, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.chopping
+        modifiers:
+          - link: 0
+            resourceID: 20100
+            required: true
+            affects:
+              - output: 0
+                ratio: 3
+        outputs:
+          - link: 0
+            resourceID: 20210
+            ratio: 1
+
+  - cardID: 31220
+    name: card.drawknife
+    tags: [ tool, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.bark_scraping
+        modifiers:
+          - link: 0
+            resourceID: 20100
+            required: true
+            affects:
+              - output: 0
+                ratio: 2
+        outputs:
+          - link: 0
+            resourceID: 20220
+            ratio: 1
+
+# ... resource sources 32xxx
+  - cardID: 32100
+    name: card.forestry
+    tags: [ source, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.chop_wood
+        modifiers:
+          - link: 0
+            resourceID: 20210
+            required: true
+            affects:
+              - output: 0
+                ratio: 0.04
+              - output: 1
+                ratio: 0.01
+        outputs:
+          - link: 0
+            resourceID: 10100
+            ratio: 1
+            storage: 1
+          - link: 1
+            resourceID: 10101
+            ratio: 3
+            storage: 1
+            
+# ... machine tools 33000
+  - cardID: 33100
+    name: card.sawbuck
+    tags: [ machine, playable ]
+    recipes:
+      - recipeID: 1
+        name: recipe.bark_scraping
+        ticks: 4
+        modifiers:
+          - link: 0
+            resourceID: 20210
+            required: true
+            affects:
+              - output: 0
+                ratio: 0.04
+              - output: 1
+                ratio: 0.01
+        inputs:
+          - link: 0
+            resourceID: 10100
+            ratio: 1
+            storage: 1
+        outputs:
+          - link: 0
+            resourceID: 10102
+            ratio: 1
+            storage: 1
+          - link: 1
+            resourceID: 10101
+            ratio: 0.5
+            storage: 1

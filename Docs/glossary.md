@@ -6,7 +6,7 @@
 - `Card` - game card, individual production or processing unit
 - `Deck` - card collection. Allowed use `Collection` instead
 - `Connection` - link between cards for resource transfer
-- ...
+- `Link` - a specific port on the card to use with the connection
 
 ## Mechanics
 
