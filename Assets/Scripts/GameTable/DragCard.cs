@@ -11,12 +11,15 @@ namespace GameTable
         private Vector2 _oldPosition = Vector2.zero;
         private Vector2 _originalPosition, _dragOffset;
 
+        private static readonly Vector2Int CardSize = new Vector2Int(5, 7);
+
         private bool _isDragging = false, _canDrag = false;
 
         private void Awake()
         {
             _rectTransform = GetComponent<RectTransform>();
             _gridManager = FindObjectOfType<GridManager>();
+            _oldPosition = _rectTransform.anchoredPosition;
         }
 
         public void CardCanDrag()
@@ -49,7 +52,14 @@ namespace GameTable
         public void OnEndDrag(PointerEventData eventData)
         {
             _isDragging = false;
-            _rectTransform.anchoredPosition = _gridManager.PlaceOnGrid(gameObject.GetInstanceID(), _rectTransform.anchoredPosition, _rectTransform.sizeDelta, _oldPosition);
+            Vector2? newPosition = _gridManager.PlaceOnGrid(
+                gameObject.GetInstanceID(),
+                _rectTransform.anchoredPosition,
+                CardSize
+            );
+            
+            // TODO: Flight animation
+            _rectTransform.anchoredPosition = newPosition ?? _oldPosition;
         }
     }
 }

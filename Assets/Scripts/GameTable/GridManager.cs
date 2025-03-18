@@ -13,41 +13,30 @@ namespace GameTable
         private Dictionary<Vector2Int, int> _grid = new Dictionary<Vector2Int, int>();
         private Dictionary<int, List<Vector2Int>> _objectInGrid = new Dictionary<int, List<Vector2Int>>();
 
-        public Vector2 PlaceOnGrid(int objectID, Vector2 position, Vector2 objectSizeDelta, Vector2 oldPosition)
+        public Vector2? PlaceOnGrid(int objectID, Vector2 position, Vector2Int objectSize)
         {
-            Vector2Int gridPos = CordToGrid(position);
-            Vector2 objectSize = objectSizeDelta / _gridSize;
+            var gridPos = CordToGrid(position);
+
+            if (IsOccupied(objectID, gridPos, objectSize, _padding))
+            {
+                var newGridPos = FindNearestAvailablePosition(objectID, gridPos, objectSize, _padding);
+                if (!newGridPos.HasValue)
+                {
+                    return null;
+                }
+
+                gridPos = newGridPos.Value;
+            }
 
             RemoveFromGrid(objectID);
-
-            if (IsOccupied(gridPos, objectSize, _padding))
-            {
-                Vector2Int? newGridPos = FindNearestAvailablePosition(gridPos, objectSize);
-
-                if (newGridPos.HasValue)
-                {
-                    PlaceObjectOnGrid(objectID, newGridPos.Value, objectSize);
-                    return GridToCord(newGridPos.Value);
-                }
-                else
-                {
-                    PlaceObjectOnGrid(objectID, CordToGrid(oldPosition), objectSize);
-                    return oldPosition;
-                }
-            }
-            else
-            {
-                PlaceObjectOnGrid(objectID, gridPos, objectSize);
-                return GridToCord(gridPos);
-            }
+            PlaceObjectOnGrid(objectID, gridPos, objectSize);
+            return GridToCord(gridPos);
         }
 
         private void RemoveFromGrid(int objectID)
         {
             if (!_objectInGrid.ContainsKey(objectID))
-            {
                 return;
-            }
 
             foreach (var cell in _objectInGrid[objectID])
             {
@@ -57,7 +46,12 @@ namespace GameTable
             _objectInGrid.Remove(objectID);
         }
 
-        private Vector2Int? FindNearestAvailablePosition(Vector2Int startGridPos, Vector2 objectSize)
+        private Vector2Int? FindNearestAvailablePosition(
+            int objectID,
+            Vector2Int startGridPos,
+            Vector2Int objectSize,
+            int padding
+        )
         {
             Queue<Vector2Int> searchQueue = new Queue<Vector2Int>();
             HashSet<Vector2Int> visitedCells = new HashSet<Vector2Int>();
@@ -77,7 +71,7 @@ namespace GameTable
                 {
                     Vector2Int currentPos = searchQueue.Dequeue();
 
-                    if (!IsOccupied(currentPos, objectSize, 0))
+                    if (!IsOccupied(objectID, currentPos, objectSize, padding))
                     {
                         return currentPos;
                     }
@@ -98,22 +92,24 @@ namespace GameTable
             return null;
         }
 
-        private bool IsOccupied(Vector2Int gridPos, Vector2 size, int padding)
+        private bool IsOccupied(int objectID, Vector2Int gridPos, Vector2Int size, int padding)
         {
-            for (int i = gridPos.x - padding; i <= gridPos.x + (int)size.x + padding; i++)
+            for (int i = gridPos.x - padding; i <= gridPos.x + size.x + padding; i++)
             {
-                for (int j = gridPos.y - padding; j <= gridPos.y + (int)size.y + padding; j++)
+                for (int j = gridPos.y - padding; j <= gridPos.y + size.y + padding; j++)
                 {
-                    if (_grid.ContainsKey(new Vector2Int(i, j)))
+                    Vector2Int cell = new Vector2Int(i, j);
+                    if (_grid.ContainsKey(cell) && _grid[cell] != objectID)
                     {
                         return true;
                     }
                 }
             }
+
             return false;
         }
 
-        private void MarkAreaOccupied(int objectID, Vector2Int gridPos, Vector2 objectSize)
+        private void PlaceObjectOnGrid(int objectID, Vector2Int gridPos, Vector2 objectSize)
         {
             if (!_objectInGrid.ContainsKey(objectID))
                 _objectInGrid[objectID] = new List<Vector2Int>();
@@ -127,11 +123,6 @@ namespace GameTable
                     _objectInGrid[objectID].Add(cell);
                 }
             }
-        }
-
-        private void PlaceObjectOnGrid(int objectID, Vector2Int gridPos, Vector2 objectSize)
-        {
-            MarkAreaOccupied(objectID, gridPos, objectSize);
         }
 
         private Vector2Int CordToGrid(Vector2 position)
